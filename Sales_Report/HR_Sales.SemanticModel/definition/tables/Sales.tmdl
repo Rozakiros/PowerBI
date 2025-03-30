@@ -1,0 +1,141 @@
+table Sales
+	lineageTag: 7710420c-1c9a-46df-8ba1-8de50ef2daf7
+
+	column SalesOrderNumber
+		dataType: string
+		isHidden
+		lineageTag: 610decac-68f2-4795-992a-085c348e127f
+		summarizeBy: none
+		sourceColumn: SalesOrderNumber
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column OrderDate
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 368d11aa-22b0-45be-a8bb-2daa603025d4
+		summarizeBy: none
+		sourceColumn: OrderDate
+
+		variation Variation
+			isDefault
+			relationship: 6734db84-63e4-466a-9f9e-b7cac005bb31
+			defaultHierarchy: LocalDateTable_6529522b-679d-4c49-9a02-63c34faca0db.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ProductKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4d7cf490-0bc8-4123-9d7c-a059bb52f93a
+		summarizeBy: none
+		sourceColumn: ProductKey
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column ResellerKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4af7c68b-e038-405a-825b-10d9c0a26668
+		summarizeBy: none
+		sourceColumn: ResellerKey
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column EmployeeKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: e4d3abeb-8224-4e5e-8d09-6c70beea2845
+		summarizeBy: none
+		sourceColumn: EmployeeKey
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column SalesTerritoryKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a03cb133-d22f-47ff-ab83-29ec7ebf318e
+		summarizeBy: none
+		sourceColumn: SalesTerritoryKey
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quantity
+		dataType: int64
+		formatString: #,0
+		lineageTag: 5703539c-0694-461e-a853-fe4058083d6e
+		summarizeBy: sum
+		sourceColumn: Quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Unit Price'
+		dataType: decimal
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: e7c85629-b603-41c2-9140-06c20a5ac9bb
+		summarizeBy: average
+		sourceColumn: Unit Price
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	column Sales
+		dataType: decimal
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: ccf3e5e6-4601-4005-8de7-ed35daf92451
+		summarizeBy: sum
+		sourceColumn: Sales
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	column Cost
+		dataType: decimal
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: 2538900b-e5e6-40a8-95b4-b60ae1d0665e
+		summarizeBy: sum
+		sourceColumn: Cost
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	partition Sales = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Databases("LAPTOP-D978TCFS"),
+				    AdventureWorksDW2020 = Source{[Name="AdventureWorksDW2020"]}[Data],
+				    dbo_FactResellerSales = AdventureWorksDW2020{[Schema="dbo",Item="FactResellerSales"]}[Data],
+				    #"Removed Other Columns" = Table.SelectColumns(dbo_FactResellerSales,{"SalesOrderNumber", "OrderDate", "ProductKey", "ResellerKey", "EmployeeKey", "SalesTerritoryKey", "OrderQuantity", "UnitPrice", "TotalProductCost", "SalesAmount", "DimProduct"}),
+				    #"Expanded DimProduct" = Table.ExpandRecordColumn(#"Removed Other Columns", "DimProduct", {"StandardCost"}, {"StandardCost"}),
+				    #"Added Custom" = Table.AddColumn(#"Expanded DimProduct", "Cost", each if [TotalProductCost] = null then [OrderQuantity] * [StandardCost] else [TotalProductCost]),
+				    #"Removed Columns" = Table.RemoveColumns(#"Added Custom",{"TotalProductCost", "StandardCost"}),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Removed Columns",{{"UnitPrice", Currency.Type}, {"Cost", Currency.Type}, {"SalesAmount", Currency.Type}}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Changed Type",{{"SalesAmount", "Sales"}, {"UnitPrice", "Unit Price"}, {"OrderQuantity", "Quantity"}}),
+				    #"Changed Type1" = Table.TransformColumnTypes(#"Renamed Columns",{{"Quantity", Int64.Type}})
+				in
+				    #"Changed Type1"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

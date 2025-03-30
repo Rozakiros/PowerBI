@@ -1,0 +1,68 @@
+table Targets
+	lineageTag: 3cafdc96-ee9b-4b46-be5b-9689d18423ae
+
+	column EmployeeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 67f78e20-c0c6-4729-9619-2f5e7160d60d
+		summarizeBy: none
+		sourceColumn: EmployeeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column Target
+		dataType: decimal
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		lineageTag: 0d755d7f-d88e-4e87-8964-05eb0225db84
+		summarizeBy: sum
+		sourceColumn: Target
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	column TargetMonth
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 087206a6-b23d-43f7-afe9-0d26d1e41681
+		summarizeBy: none
+		sourceColumn: TargetMonth
+
+		variation Variation
+			isDefault
+			relationship: 526d8917-3e80-4368-9ede-c0cb3a3443e2
+			defaultHierarchy: LocalDateTable_00dc42df-5ced-40f7-9836-fc572c339262.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition Targets = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents("C:\PBI\Data\ResellerSalesTargets.csv"),[Delimiter=",", Columns=14, Encoding=1200, QuoteStyle=QuoteStyle.None]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Year", Int64.Type}, {"EmployeeID", Int64.Type}, {"M01", type text}, {"M02", type text}, {"M03", type text}, {"M04", type text}, {"M05", type text}, {"M06", type text}, {"M07", type text}, {"M08", type text}, {"M09", type text}, {"M10", type text}, {"M11", type text}, {"M12", type text}}),
+				    #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(#"Changed Type", {"Year", "EmployeeID"}, "Attribute", "Value"),
+				    #"Filtered Rows" = Table.SelectRows(#"Unpivoted Other Columns", each ([Value] <> "-")),
+				    #"Renamed Columns" = Table.RenameColumns(#"Filtered Rows",{{"Attribute", "MonthNumber"}, {"Value", "Target"}}),
+				    #"Replaced Value" = Table.ReplaceValue(#"Renamed Columns","M","",Replacer.ReplaceText,{"MonthNumber"}),
+				    #"Changed Type1" = Table.TransformColumnTypes(#"Replaced Value",{{"MonthNumber", Int64.Type}}),
+				    #"Inserted Merged Column" = Table.AddColumn(#"Changed Type1", "Merged", each Text.Combine({Text.From([MonthNumber], "en-US"), "/1/", Text.From([Year], "en-US")}), type text),
+				    #"Renamed Columns1" = Table.RenameColumns(#"Inserted Merged Column",{{"Merged", "TargetMonth"}}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Renamed Columns1",{"Year", "MonthNumber"}),
+				    #"Changed Type2" = Table.TransformColumnTypes(#"Removed Columns",{{"TargetMonth", type date}, {"Target", Currency.Type}}),
+				    #"Inserted Multiplication" = Table.AddColumn(#"Changed Type2", "Multiplication", each [Target] * 1000, Currency.Type),
+				    #"Removed Columns1" = Table.RemoveColumns(#"Inserted Multiplication",{"Multiplication"}),
+				    #"Multiplied Column" = Table.TransformColumns(#"Removed Columns1", {{"Target", each _ * 1000, Currency.Type}})
+				in
+				    #"Multiplied Column"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

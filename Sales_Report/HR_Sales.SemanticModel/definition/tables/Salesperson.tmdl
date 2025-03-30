@@ -1,0 +1,72 @@
+table Salesperson
+	lineageTag: defcac55-1853-4494-86df-a61e17ee3110
+
+	column EmployeeID
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 2487def5-656f-4489-8981-3aff64d76ce9
+		summarizeBy: none
+		sourceColumn: EmployeeID
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column Salesperson
+		dataType: string
+		lineageTag: ec600f96-2720-4eff-b832-2d78aa683f01
+		summarizeBy: none
+		sourceColumn: Salesperson
+
+		annotation SummarizationSetBy = Automatic
+
+	column Title
+		dataType: string
+		lineageTag: 96ae0e14-7109-460e-b3c9-01555aae621c
+		summarizeBy: none
+		sourceColumn: Title
+
+		annotation SummarizationSetBy = Automatic
+
+	column UPN
+		dataType: string
+		isHidden
+		lineageTag: 530eb0c1-a213-48ee-8c90-3fa5629df7b7
+		summarizeBy: none
+		sourceColumn: UPN
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column EmployeeKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6dd909f8-4737-473c-924b-b2b3b6589617
+		summarizeBy: count
+		sourceColumn: EmployeeKey
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Salesperson = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Databases("LAPTOP-D978TCFS"),
+				    AdventureWorksDW2020 = Source{[Name="AdventureWorksDW2020"]}[Data],
+				    dbo_DimEmployee = AdventureWorksDW2020{[Schema="dbo",Item="DimEmployee"]}[Data],
+				    #"Filtered Rows" = Table.SelectRows(dbo_DimEmployee, each ([SalesPersonFlag] = true)),
+				    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"EmployeeKey", "EmployeeNationalIDAlternateKey", "FirstName", "LastName", "Title", "EmailAddress"}),
+				    #"Merged Columns" = Table.CombineColumns(#"Removed Other Columns",{"FirstName", "LastName"},Combiner.CombineTextByDelimiter(" ", QuoteStyle.None),"Salesperson"),
+				    #"Renamed Columns" = Table.RenameColumns(#"Merged Columns",{{"EmailAddress", "UPN"}, {"EmployeeNationalIDAlternateKey", "EmployeeID"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

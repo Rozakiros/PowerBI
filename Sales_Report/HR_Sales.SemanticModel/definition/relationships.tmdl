@@ -1,0 +1,38 @@
+relationship 6734db84-63e4-466a-9f9e-b7cac005bb31
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Sales.OrderDate
+	toColumn: LocalDateTable_6529522b-679d-4c49-9a02-63c34faca0db.Date
+
+relationship 526d8917-3e80-4368-9ede-c0cb3a3443e2
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Targets.TargetMonth
+	toColumn: LocalDateTable_00dc42df-5ced-40f7-9836-fc572c339262.Date
+
+relationship a6374456-5ef4-4f4e-89f2-f728b452d8cb
+	fromColumn: SalespersonRegion.SalesTerritoryKey
+	toColumn: Region.SalesTerritoryKey
+
+	annotation PBI_IsFromSource = FS
+
+relationship 310f2129-2240-4fe4-9c1c-d0ee860fe00e
+	fromColumn: Sales.SalesTerritoryKey
+	toColumn: Region.SalesTerritoryKey
+
+	annotation PBI_IsFromSource = FS
+
+relationship e5339148-a111-7cf5-7dee-104b990009ab
+	fromColumn: Sales.ResellerKey
+	toColumn: Reseller.ResellerKey
+
+relationship 3147c6e1-62a1-c594-a727-4f924f2acc93
+	fromColumn: Sales.EmployeeKey
+	toColumn: Salesperson.EmployeeID
+
+relationship 121e7dfe-558a-c133-75db-18289a6e2e17
+	fromColumn: Sales.ProductKey
+	toColumn: Product.ProductKey
+
+relationship a6ec0bee-6cde-09b8-2ab0-ba0668544d8a
+	fromColumn: Targets.EmployeeID
+	toColumn: Salesperson.EmployeeID
+

@@ -1,0 +1,72 @@
+table Region
+	lineageTag: 60b2dda2-2bac-42ac-98f6-488b4ddc1d02
+
+	column Region
+		dataType: string
+		lineageTag: 53cdb842-def2-4e6d-aec8-77b58f62c55a
+		summarizeBy: none
+		sourceColumn: Region
+
+		annotation SummarizationSetBy = Automatic
+
+	column Country
+		dataType: string
+		lineageTag: 3126d8f1-39f2-447b-8545-aff9a2af3160
+		dataCategory: Country
+		summarizeBy: none
+		sourceColumn: Country
+
+		annotation SummarizationSetBy = Automatic
+
+	column Group
+		dataType: string
+		lineageTag: 5da765d4-e9d7-439c-88c9-ffb94f44a866
+		summarizeBy: none
+		sourceColumn: Group
+
+		annotation SummarizationSetBy = Automatic
+
+	column SalesTerritoryKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 3c125547-5ed1-4c6e-8680-80fbad6d64c6
+		summarizeBy: none
+		sourceColumn: SalesTerritoryKey
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy Regions
+		lineageTag: 5b194a1d-95aa-424f-99ec-b5dfd2ef0975
+
+		level Region
+			lineageTag: 8f4d9998-c27a-40af-befe-81663289f1d1
+			column: Region
+
+		level Country
+			lineageTag: 617b337c-60b7-4c55-9634-3917facbac30
+			column: Country
+
+		level Group
+			lineageTag: 20f04dd5-fb16-42e0-8361-c8762dc238f3
+			column: Group
+
+	partition Region = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Databases("LAPTOP-D978TCFS"),
+				    AdventureWorksDW2020 = Source{[Name="AdventureWorksDW2020"]}[Data],
+				    dbo_DimSalesTerritory = AdventureWorksDW2020{[Schema="dbo",Item="DimSalesTerritory"]}[Data],
+				    #"Filtered Rows" = Table.SelectRows(dbo_DimSalesTerritory, each ([SalesTerritoryAlternateKey] <> 0)),
+				    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"SalesTerritoryRegion", "SalesTerritoryCountry", "SalesTerritoryGroup", "SalesTerritoryKey"}),
+				    #"Renamed Columns" = Table.RenameColumns(#"Removed Other Columns",{{"SalesTerritoryRegion", "Region"}, {"SalesTerritoryCountry", "Country"}, {"SalesTerritoryGroup", "Group"}})
+				in
+				    #"Renamed Columns"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
